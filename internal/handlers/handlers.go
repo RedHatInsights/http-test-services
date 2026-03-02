@@ -69,27 +69,27 @@ func withCommon(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// writeJSON writes a JSON response, respecting the ?status query param override.
-func writeJSON(w http.ResponseWriter, r *http.Request, code int, data any) {
+// resolveStatus returns the status code, overridden by ?status if present.
+func resolveStatus(r *http.Request, code int) int {
 	if statusParam := r.URL.Query().Get("status"); statusParam != "" {
 		if status, err := strconv.Atoi(statusParam); err == nil {
 			code = status
 		}
 	}
+	return code
+}
+
+// writeJSON writes a JSON response, respecting the ?status query param override.
+func writeJSON(w http.ResponseWriter, r *http.Request, code int, data any) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
+	w.WriteHeader(resolveStatus(r, code))
 	json.NewEncoder(w).Encode(data)
 }
 
 // writeJSONRaw writes a raw JSON byte slice response.
 func writeJSONRaw(w http.ResponseWriter, r *http.Request, code int, raw []byte) {
-	if statusParam := r.URL.Query().Get("status"); statusParam != "" {
-		if status, err := strconv.Atoi(statusParam); err == nil {
-			code = status
-		}
-	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
+	w.WriteHeader(resolveStatus(r, code))
 	w.Write(raw)
 }
 
