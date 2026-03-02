@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: Template
+metadata:
+  annotations:
+    description: HTTP Test Services
+    iconClass: icon-load-balancer
+    tags: api,test
+  name: ${APP_NAME}
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: ${APP_NAME}
+    name: http-test-services-grpc
+  spec:
+    ports:
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+      appProtocol: grpc
+    selector:
+      app: ${APP_NAME}
+- apiVersion: cloud.redhat.com/v1alpha1
+  kind: ClowdApp
+  metadata:
+    name: ${APP_NAME}
+  spec:
+    envName: ${ENV_NAME}
+    deployments:
+    - name: service
+      minReplicas: ${{MIN_REPLICAS}}
+      webServices:
+        public:
+          enabled: true
+      podSpec:
+        image: ${IMAGE}:${IMAGE_TAG}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ping
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ping
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: ${CPU_LIMIT}
+            memory: ${MEMORY_LIMIT}
+          requests:
+            cpu: ${CPU_REQUEST}
+            memory: ${MEMORY_REQUEST}
+        env:
+          - name: HTTP_TIMEOUT
+            value: ${HTTP_TIMEOUT}
+          - name: API_PREFIX
+            value: ${API_PREFIX}
+parameters:
+- name: IMAGE_TAG
+  required: true
+- name: IMAGE
+  value: quay.io/cloudservices/http-test-services
+- name: ENV_NAME
+  required: true
+- description: Minimum number of pods to use when autoscaling is enabled
+  name: MIN_REPLICAS
+  value: '2'
+- name: CPU_LIMIT
+  value: 300m
+- name: MEMORY_LIMIT
+  value: 512Mi
+- name: CPU_REQUEST
+  value: 150m
+- name: MEMORY_REQUEST
+  value: 256Mi
+- description: Name for app in the deployment
+  name: APP_NAME
+  required: true
+  value: http-test-services
+- description: HTTP server timeout in seconds
+  name: HTTP_TIMEOUT
+  value: '30'
+- description: Path for the apis, defaults if not provided
+  name: API_PREFIX
+  value: ""

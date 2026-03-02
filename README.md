@@ -33,6 +33,7 @@ A gRPC `PingService` runs on port 50051 with a single `Ping` RPC that echoes the
 |---------|-------------|---------|
 | `ACG_CONFIG` | Path to Clowder JSON config file (reads `webPort`) | `9092` |
 | `API_PREFIX` | Path prefix for all routes | `/api/http-test-services` |
+| `HTTP_TIMEOUT` | HTTP server read/write/idle timeout in seconds | `30` |
 
 ## Build and run
 

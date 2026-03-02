@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func setupMux(t *testing.T) *http.ServeMux {
@@ -258,10 +259,23 @@ func TestStatusOverride(t *testing.T) {
 
 func TestSleepParam(t *testing.T) {
 	mux := setupMux(t)
-	// Use a very short sleep to avoid slow tests.
-	req := httptest.NewRequest("GET", "/ping?sleep=0.01", nil)
+	req := httptest.NewRequest("GET", "/ping?sleep=1", nil)
 	w := httptest.NewRecorder()
 	mux.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestSleepParamIgnoresFloat(t *testing.T) {
+	mux := setupMux(t)
+	start := time.Now()
+	req := httptest.NewRequest("GET", "/ping?sleep=0.5", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+	if time.Since(start) >= 500*time.Millisecond {
+		t.Error("expected float sleep param to be ignored")
+	}
 	if w.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", w.Code)
 	}

@@ -9,7 +9,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
+	"time"
 
 	pb "github.com/RedHatInsights/http-test-services/api/gen"
 	"github.com/RedHatInsights/http-test-services/internal"
@@ -37,9 +39,13 @@ func main() {
 	mux := http.NewServeMux()
 	handlers.RegisterRoutes(mux, docsDir)
 
+	timeout := resolveHTTPTimeout()
 	httpServer := &http.Server{
-		Addr:    fmt.Sprintf(":%d", httpPort),
-		Handler: mux,
+		Addr:         fmt.Sprintf(":%d", httpPort),
+		Handler:      mux,
+		ReadTimeout:  timeout,
+		WriteTimeout: timeout,
+		IdleTimeout:  timeout,
 	}
 
 	grpcServer := grpc.NewServer()
@@ -86,6 +92,15 @@ func resolveHTTPPort() int {
 		}
 	}
 	return 9092
+}
+
+func resolveHTTPTimeout() time.Duration {
+	if s := os.Getenv(internal.EnvHTTPTimeout); s != "" {
+		if n, err := strconv.Atoi(s); err == nil && n > 0 {
+			return time.Duration(n) * time.Second
+		}
+	}
+	return 30 * time.Second
 }
 
 func resolveDocsDir() string {
