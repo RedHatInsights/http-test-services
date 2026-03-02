@@ -19,8 +19,8 @@ import (
 // ApiPrefix is the path prefix for all routes. Configurable via the
 // API_PREFIX environment variable; defaults to "/api/http-test-services".
 var ApiPrefix = func() string {
-	if v := os.Getenv(internal.EnvAPIPrefix); v != "" {
-		return v
+	if prefix := os.Getenv(internal.EnvAPIPrefix); prefix != "" {
+		return prefix
 	}
 	return "/api/http-test-services"
 }()
