@@ -60,9 +60,9 @@ func RegisterRoutes(mux *http.ServeMux, docsDir string) {
 func withCommon(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%s %s %s", r.Method, r.URL.Path, r.RemoteAddr)
-		if s := r.URL.Query().Get("sleep"); s != "" {
-			if d, err := strconv.ParseFloat(s, 64); err == nil {
-				time.Sleep(time.Duration(d * float64(time.Second)))
+		if sleepParam := r.URL.Query().Get("sleep"); sleepParam != "" {
+			if sleep, err := strconv.ParseFloat(sleepParam, 64); err == nil {
+				time.Sleep(time.Duration(sleep * float64(time.Second)))
 			}
 		}
 		next(w, r)
@@ -71,9 +71,9 @@ func withCommon(next http.HandlerFunc) http.HandlerFunc {
 
 // writeJSON writes a JSON response, respecting the ?status query param override.
 func writeJSON(w http.ResponseWriter, r *http.Request, code int, data any) {
-	if s := r.URL.Query().Get("status"); s != "" {
-		if n, err := strconv.Atoi(s); err == nil {
-			code = n
+	if statusParam := r.URL.Query().Get("status"); statusParam != "" {
+		if status, err := strconv.Atoi(statusParam); err == nil {
+			code = status
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -83,9 +83,9 @@ func writeJSON(w http.ResponseWriter, r *http.Request, code int, data any) {
 
 // writeJSONRaw writes a raw JSON byte slice response.
 func writeJSONRaw(w http.ResponseWriter, r *http.Request, code int, raw []byte) {
-	if s := r.URL.Query().Get("status"); s != "" {
-		if n, err := strconv.Atoi(s); err == nil {
-			code = n
+	if statusParam := r.URL.Query().Get("status"); statusParam != "" {
+		if status, err := strconv.Atoi(statusParam); err == nil {
+			code = status
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -94,10 +94,10 @@ func writeJSONRaw(w http.ResponseWriter, r *http.Request, code int, raw []byte) 
 }
 
 func redirectHandler(w http.ResponseWriter, r *http.Request) {
-	loc := ApiPrefix + "/request"
-	w.Header().Set("Location", loc)
+	location := ApiPrefix + "/request"
+	w.Header().Set("Location", location)
 	w.WriteHeader(http.StatusFound)
-	fmt.Fprintf(w, "Redirecting to %s\n", loc)
+	fmt.Fprintf(w, "Redirecting to %s\n", location)
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
