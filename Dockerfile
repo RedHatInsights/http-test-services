@@ -3,7 +3,7 @@ WORKDIR /app
 USER root
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
+COPY --chown=default . .
 RUN CGO_ENABLED=0 go build -o /tmp/http-test-services .
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest

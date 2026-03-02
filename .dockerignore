@@ -1,0 +1,6 @@
+.git
+.docker
+.podman
+.kube
+.github
+.tekton
