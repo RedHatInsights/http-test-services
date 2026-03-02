@@ -61,8 +61,8 @@ func withCommon(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%s %s %s", r.Method, r.URL.Path, r.RemoteAddr)
 		if sleepParam := r.URL.Query().Get("sleep"); sleepParam != "" {
-			if sleep, err := strconv.ParseFloat(sleepParam, 64); err == nil {
-				time.Sleep(time.Duration(sleep * float64(time.Second)))
+			if sleep, err := strconv.Atoi(sleepParam); err == nil {
+				time.Sleep(time.Duration(sleep) * time.Second)
 			}
 		}
 		next(w, r)
