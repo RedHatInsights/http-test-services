@@ -1,12 +1,17 @@
-FROM registry.access.redhat.com/ubi9/go-toolset:9.8-1780490420 AS builder
+FROM registry.access.redhat.com/hi/go:1.26.5-fips-builder AS builder
 WORKDIR /app
 USER root
 COPY go.mod go.sum ./
 RUN go mod download
-COPY --chown=default . .
+COPY . .
 RUN CGO_ENABLED=0 go build -o /tmp/http-test-services .
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
+FROM registry.access.redhat.com/hi/core-runtime:2.43-openssl-fips-builder
 COPY --from=builder /tmp/http-test-services /http-test-services
 COPY docs/ /docs/
+
+ENV GODEBUG=fips140=on
+
+USER 1001
+
 ENTRYPOINT ["/http-test-services"]
