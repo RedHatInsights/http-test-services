@@ -281,6 +281,34 @@ func TestWebSocketNonUpgrade(t *testing.T) {
 	}
 }
 
+func TestCustomApiPrefix(t *testing.T) {
+	original := ApiPrefix
+	t.Cleanup(func() { ApiPrefix = original })
+
+	ApiPrefix = "/api/apicast-test-services"
+	mux := http.NewServeMux()
+	RegisterRoutes(mux, "../../docs")
+
+	for _, tc := range []struct {
+		name string
+		path string
+		code int
+	}{
+		{"root", "/api/apicast-test-services/", http.StatusFound},
+		{"ping", "/api/apicast-test-services/ping", http.StatusOK},
+		{"versioned", "/api/apicast-test-services/v1/ping", http.StatusOK},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", tc.path, nil)
+			w := httptest.NewRecorder()
+			mux.ServeHTTP(w, req)
+			if w.Code != tc.code {
+				t.Errorf("expected %d, got %d", tc.code, w.Code)
+			}
+		})
+	}
+}
+
 func TestVersionedRoute(t *testing.T) {
 	mux := setupMux(t)
 	req := httptest.NewRequest("GET", ApiPrefix+"/v1/ping", nil)
