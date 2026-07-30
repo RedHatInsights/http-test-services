@@ -52,6 +52,59 @@ go test ./...
 ## Docker
 
 ```sh
-docker build -t http-test-services .
-docker run -p 9092:9092 -p 50051:50051 http-test-services
+podman build -t http-test-services .
+podman run -p 9092:9092 -p 50051:50051 http-test-services
+```
+
+## Testing endpoints
+
+Start the service locally or via Docker, then use the examples below. All HTTP endpoints default to port `9092`.
+
+### HTTP
+
+```sh
+# Ping
+curl http://localhost:9092/api/http-test-services/ping
+
+# Request introspection (returns env and headers)
+curl http://localhost:9092/api/http-test-services/request
+
+# Headers
+curl http://localhost:9092/api/http-test-services/headers
+
+# Redirect
+curl -v http://localhost:9092/api/http-test-services/redirect?redirect_to=/api/http-test-services/ping
+
+# Identity (base64-encoded x-rh-identity header)
+curl -H "x-rh-identity: $(echo '{"identity":{"account_number":"123"}}' | base64)" http://localhost:9092/api/http-test-services/identity
+
+# File upload
+curl -F file=@README.md http://localhost:9092/api/http-test-services/upload
+
+# OpenAPI spec
+curl http://localhost:9092/api/http-test-services/v1/openapi.json
+
+# Sleep (delay response by N seconds)
+curl http://localhost:9092/api/http-test-services/ping?sleep=2
+
+# Status override
+curl -v http://localhost:9092/api/http-test-services/ping?status=418
+```
+
+### SSE
+
+```sh
+curl -N http://localhost:9092/api/http-test-services/sse
+```
+
+### WebSocket
+
+```sh
+websocat ws://localhost:9092/api/http-test-services/wss
+```
+
+### gRPC
+
+```sh
+grpcurl -plaintext -proto api/test_service.proto -d '{"message": "hello"}' localhost:50051 test_service.PingService/Ping
 ```

@@ -20,7 +20,7 @@ import (
 // API_PREFIX environment variable; defaults to "/api/http-test-services".
 var ApiPrefix = func() string {
 	if prefix := os.Getenv(internal.EnvAPIPrefix); prefix != "" {
-		return prefix
+		return strings.TrimRight(prefix, "/")
 	}
 	return "/api/http-test-services"
 }()

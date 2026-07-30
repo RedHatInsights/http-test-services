@@ -70,7 +70,7 @@ The prefix `(/api/http-test-services/)` is configurable via the `API_PREFIX` env
 |---|---|---|
 | **Server model** | Sinatra app mounted on Thin (EventMachine) | Go `net/http.Server` with goroutines |
 | **Binary** | Interpreted Ruby scripts | Single static binary (`CGO_ENABLED=0`) |
-| **Docker build** | Single-stage (Ruby base image) | Multi-stage (UBI9 go-toolset builder → UBI9 minimal) |
+| **Docker build** | Single-stage (Ruby base image) | Multi-stage (Hummingbird `hi/go` FIPS builder → `hi/core-runtime` FIPS runtime) |
 | **gRPC server** | Ruby gRPC gem, same process | Go gRPC, separate goroutine on port 50051 |
 | **JSON output** | Ruby hash serialization | Custom ordered JSON marshaling for deterministic output |
 | **Routing** | Sinatra DSL (`get '/' do ... end`) | `http.NewServeMux` with `HandleFunc` |
@@ -83,7 +83,7 @@ Both versions deploy via Clowder/ClowdApp on the same platform:
 |---|---|---|
 | **HTTP port** | 9092 (via Clowder `webPort`) | 9092 (via Clowder `webPort`) |
 | **gRPC port** | 50051 | 50051 |
-| **Container base** | UBI9 | UBI9 minimal |
+| **Container base** | UBI9 | Hummingbird (`hi/core-runtime` FIPS) |
 | **Min replicas** | 2 | 2 |
 | **Health checks** | `GET /ping` | `GET /ping` (liveness + readiness) |
 | **Image registry** | quay.io/cloudservices | quay.io/hcc-accessmanagement-tenant |
@@ -128,5 +128,5 @@ No external HTTP framework or Clowder client library is needed — the Go servic
 - **No runtime interpreter** — compiled static binary starts in milliseconds.
 - **Lower memory footprint** — no Ruby VM, no gem loading overhead.
 - **Native concurrency** — goroutines handle concurrent requests without EventMachine or thread pools.
-- **Smaller container image** — UBI9 minimal base with a single binary, no language runtime installed.
+- **Smaller container image** — Hummingbird minimal FIPS runtime base with a single binary, no language runtime installed.
 - **Faster builds** — `go build` produces a ready-to-run binary; no `bundle install` step at deploy time.
