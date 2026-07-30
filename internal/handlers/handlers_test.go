@@ -91,6 +91,44 @@ func TestHeaders(t *testing.T) {
 	}
 }
 
+func TestHeadersExcludesConfiguredHeaders(t *testing.T) {
+	original := excludedHeaders
+	t.Cleanup(func() { excludedHeaders = original })
+
+	excludedHeaders = map[string]struct{}{
+		"x-akamai-origin-secret": {},
+		"x-secret-two":           {},
+	}
+
+	mux := setupMux(t)
+	for _, path := range routesFor("headers") {
+		t.Run(path, func(t *testing.T) {
+			req := httptest.NewRequest("GET", path, nil)
+			req.Header.Set("X-Akamai-Origin-Secret", "secret-value")
+			req.Header.Set("X-Secret-Two", "also-secret")
+			req.Header.Set("X-Other-Header", "visible")
+			w := httptest.NewRecorder()
+			mux.ServeHTTP(w, req)
+			if w.Code != http.StatusOK {
+				t.Errorf("expected 200, got %d", w.Code)
+			}
+			var body map[string]string
+			if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+				t.Fatalf("invalid JSON: %v", err)
+			}
+			if _, ok := body["x-akamai-origin-secret"]; ok {
+				t.Error("x-akamai-origin-secret should not be present in response")
+			}
+			if _, ok := body["x-secret-two"]; ok {
+				t.Error("x-secret-two should not be present in response")
+			}
+			if body["x-other-header"] != "visible" {
+				t.Errorf("expected x-other-header=visible, got %q", body["x-other-header"])
+			}
+		})
+	}
+}
+
 func TestRedirect(t *testing.T) {
 	mux := setupMux(t)
 	for _, path := range routesFor("redirect") {
