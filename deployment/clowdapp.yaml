@@ -99,4 +99,4 @@ parameters:
   value: ""
 - description: Comma-separated list of request headers to exclude from /headers endpoint
   name: HEADERS_TO_EXCLUDE
-  value: "x-akamai-origin-secret"
+  value: "x-akamai-origin-secret,x-rh-insights-gateway-secret"
