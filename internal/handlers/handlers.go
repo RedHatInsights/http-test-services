@@ -180,11 +180,26 @@ func makeOpenapiHandler(docsDir string) http.HandlerFunc {
 	}
 }
 
-// sortedHeaders extracts HTTP headers lowercased and dash-separated, sorted by key.
+var excludedHeaders = func() map[string]struct{} {
+	m := make(map[string]struct{})
+	if raw := os.Getenv(internal.EnvHeadersToExclude); raw != "" {
+		for _, h := range strings.Split(raw, ",") {
+			if trimmed := strings.TrimSpace(strings.ToLower(h)); trimmed != "" {
+				m[trimmed] = struct{}{}
+			}
+		}
+	}
+	return m
+}()
+
 func sortedHeaders(r *http.Request) orderedMap[string] {
 	headers := make(map[string]string)
 	for k, v := range r.Header {
-		headers[strings.ToLower(k)] = strings.Join(v, ", ")
+		lower := strings.ToLower(k)
+		if _, excluded := excludedHeaders[lower]; excluded {
+			continue
+		}
+		headers[lower] = strings.Join(v, ", ")
 	}
 	return sortMapByKey(headers)
 }

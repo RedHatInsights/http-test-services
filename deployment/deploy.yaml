@@ -51,6 +51,8 @@ objects:
             value: ${HTTP_TIMEOUT}
           - name: API_PREFIX
             value: ${API_PREFIX}
+          - name: HEADERS_TO_EXCLUDE
+            value: ${HEADERS_TO_EXCLUDE}
           readinessProbe:
             failureThreshold: 3
             httpGet:
@@ -129,3 +131,6 @@ parameters:
 - description: Path for the apis, defaults if not provided
   name: API_PREFIX
   value: ""
+- description: Comma-separated list of request headers to exclude from /headers endpoint
+  name: HEADERS_TO_EXCLUDE
+  value: "x-akamai-origin-secret,x-rh-insights-gateway-secret"
