@@ -3,9 +3,9 @@ module github.com/RedHatInsights/http-test-services
 go 1.26.5
 
 require (
+	github.com/coder/websocket v1.8.15
 	google.golang.org/grpc v1.84.0
 	google.golang.org/protobuf v1.36.12
-	nhooyr.io/websocket v1.8.17
 )
 
 require (

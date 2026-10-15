@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"nhooyr.io/websocket"
+	"github.com/coder/websocket"
 )
 
 // WebSocketHandler upgrades to WebSocket and echoes messages back.
