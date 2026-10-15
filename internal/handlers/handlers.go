@@ -25,9 +25,7 @@ var ApiPrefix = func() string {
 	return "/api/http-test-services"
 }()
 
-// WssPath is the fixed path of the WebSocket route. Unlike the other routes it
-// is not served under ApiPrefix and is not configurable.
-const WssPath = "/wss/http-test-services"
+const WssPath = "/wss/http-test-services/"
 
 // RegisterRoutes registers all HTTP route handlers on the given mux.
 func RegisterRoutes(mux *http.ServeMux, docsDir string) {
