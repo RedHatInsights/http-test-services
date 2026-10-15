@@ -25,6 +25,8 @@ var ApiPrefix = func() string {
 	return "/api/http-test-services"
 }()
 
+const WssPath = "/wss/http-test-services/"
+
 // RegisterRoutes registers all HTTP route handlers on the given mux.
 func RegisterRoutes(mux *http.ServeMux, docsDir string) {
 	register := func(method, path string, handler http.HandlerFunc) {
@@ -48,8 +50,9 @@ func RegisterRoutes(mux *http.ServeMux, docsDir string) {
 	register("GET", "/private/ping", pingHandler)
 	register("POST", "/upload", uploadHandler)
 	register("GET", "/identity", identityHandler)
-	register("GET", "/wss", WebSocketHandler)
 	register("GET", "/sse", SSEHandler)
+
+	mux.HandleFunc("GET "+WssPath, withCommon(WebSocketHandler))
 
 	openapiHandler := makeOpenapiHandler(docsDir)
 	mux.HandleFunc("GET "+ApiPrefix+"/{version}/openapi.json", withCommon(openapiHandler))

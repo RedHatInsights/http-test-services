@@ -18,13 +18,18 @@ All HTTP endpoints are available at both `/` and `/api/http-test-services/` (con
 | `/private/ping` | GET | `{"status":"available"}` |
 | `/upload` | POST | Accepts multipart file upload, returns `{"status":"posted","upload_byte_size":N}` |
 | `/identity` | GET | Decodes base64 `x-rh-identity` header (400 if missing) |
-| `/wss` | GET | WebSocket echo server |
 | `/sse` | GET | Server-Sent Events stream (ping every 3s) |
 | `/{version}/openapi.json` | GET | OpenAPI spec |
 
 All endpoints support `?sleep=N` (delay in seconds) and `?status=N` (override response status code) query parameters.
 
 A gRPC `PingService` runs on port 50051 with a single `Ping` RPC that echoes the message back.
+
+### WebSocket route
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/wss/http-test-services` | GET | WebSocket echo server (JSON message if not an upgrade request) |
 
 ## Configuration
 
@@ -100,7 +105,7 @@ curl -N http://localhost:9092/api/http-test-services/sse
 ### WebSocket
 
 ```sh
-websocat ws://localhost:9092/api/http-test-services/wss
+websocat ws://localhost:9092/wss/http-test-services
 ```
 
 ### gRPC
