@@ -303,19 +303,15 @@ func TestSleepParamIgnoresFloat(t *testing.T) {
 
 func TestWebSocketNonUpgrade(t *testing.T) {
 	mux := setupMux(t)
-	for _, path := range routesFor("wss") {
-		t.Run(path, func(t *testing.T) {
-			req := httptest.NewRequest("GET", path, nil)
-			w := httptest.NewRecorder()
-			mux.ServeHTTP(w, req)
-			var body map[string]string
-			if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
-				t.Fatalf("invalid JSON: %v", err)
-			}
-			if body["message"] != "not a websocket request" {
-				t.Errorf("expected 'not a websocket request', got %q", body["message"])
-			}
-		})
+	req := httptest.NewRequest("GET", WssPath, nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+	var body map[string]string
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if body["message"] != "not a websocket request" {
+		t.Errorf("expected 'not a websocket request', got %q", body["message"])
 	}
 }
 
@@ -344,6 +340,56 @@ func TestCustomApiPrefix(t *testing.T) {
 				t.Errorf("expected %d, got %d", tc.code, w.Code)
 			}
 		})
+	}
+}
+
+// TestWebSocketOnlyAtWssPath asserts WssPath is the only WebSocket route:
+// no root /wss, no versioned variant and nothing under ApiPrefix.
+func TestWebSocketOnlyAtWssPath(t *testing.T) {
+	mux := setupMux(t)
+	for _, tc := range []struct {
+		name string
+		path string
+		code int
+	}{
+		{"root", "/wss", http.StatusNotFound},
+		{"versioned", WssPath + "/v1", http.StatusNotFound},
+		// ServeMux redirects to /api/http-test-services/wss/, which the
+		// generic {version}/{$} route then serves as the root redirect.
+		{"api prefix", ApiPrefix + "/wss", http.StatusTemporaryRedirect},
+		{"api prefix versioned", ApiPrefix + "/v1/wss", http.StatusNotFound},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", tc.path, nil)
+			w := httptest.NewRecorder()
+			mux.ServeHTTP(w, req)
+			if w.Code != tc.code {
+				t.Errorf("expected %d, got %d", tc.code, w.Code)
+			}
+			var body map[string]string
+			json.Unmarshal(w.Body.Bytes(), &body)
+			if body["message"] == "not a websocket request" {
+				t.Errorf("%s still routed to the WebSocket handler", tc.path)
+			}
+		})
+	}
+}
+
+// TestWebSocketPathIgnoresApiPrefix asserts the WebSocket path stays fixed
+// even when ApiPrefix is overridden.
+func TestWebSocketPathIgnoresApiPrefix(t *testing.T) {
+	original := ApiPrefix
+	t.Cleanup(func() { ApiPrefix = original })
+
+	ApiPrefix = "/api/apicast-test-services"
+	mux := http.NewServeMux()
+	RegisterRoutes(mux, "../../docs")
+
+	req := httptest.NewRequest("GET", WssPath, nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
 	}
 }
 

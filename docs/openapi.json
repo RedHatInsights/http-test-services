@@ -254,7 +254,39 @@
         }
       }
     },
-    "/wss": {
+    "/sse": {
+      "get": {
+        "description": "Server-Sent Events endpoint. Streams ping events with random data every 3 seconds.",
+        "responses": {
+          "200": {
+            "description": "SSE stream of ping events",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wss/http-test-services": {
+      "servers": [
+        {
+          "url": "https://console.{environment}redhat.com",
+          "variables": {
+            "environment": {
+              "default": "",
+              "enum": [
+                "",
+                "stage."
+              ],
+              "description": "Empty for production, 'stage.' for staging"
+            }
+          }
+        }
+      ],
       "get": {
         "description": "WebSocket echo endpoint. Upgrades the connection and echoes back any messages received. Returns a JSON message if the request is not a WebSocket upgrade.",
         "responses": {
@@ -273,23 +305,6 @@
                       "example": "not a websocket request"
                     }
                   }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/sse": {
-      "get": {
-        "description": "Server-Sent Events endpoint. Streams ping events with random data every 3 seconds.",
-        "responses": {
-          "200": {
-            "description": "SSE stream of ping events",
-            "content": {
-              "text/event-stream": {
-                "schema": {
-                  "type": "string"
                 }
               }
             }

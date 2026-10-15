@@ -7,7 +7,7 @@
 | **Repository** | `apicast-test-services` | `http-test-services` |
 | **Language** | Ruby 3.3 | Go 1.25 |
 | **HTTP Framework** | Sinatra + Thin | Go `net/http` stdlib |
-| **WebSocket** | faye-websocket | nhooyr.io/websocket |
+| **WebSocket** | faye-websocket | github.com/coder/websocket |
 | **gRPC** | grpc (Ruby gem) | google.golang.org/grpc |
 | **SSE** | Custom Sinatra streaming | Custom `http.Flusher` streaming |
 
@@ -32,6 +32,8 @@ The new service also registers every endpoint at three path variants:
 
 The prefix `(/api/http-test-services/)` is configurable via the `API_PREFIX` environment variable.
 
+The WebSocket endpoint is served only at the fixed path `/wss/http-test-services`.
+
 ## Endpoint Comparison
 
 | Endpoint | Old (`apicast-test-services`) | New (`http-test-services`) | Notes |
@@ -44,7 +46,7 @@ The prefix `(/api/http-test-services/)` is configurable via the `API_PREFIX` env
 | `GET /private/ping` | `{"status":"available"}` | `{"status":"available"}` | Same behavior |
 | `POST /upload` | File upload with byte size | File upload with byte size | Same behavior |
 | `GET /identity` | Decode `X-Rh-Identity` header | Decode `X-Rh-Identity` header | Same behavior |
-| `GET /wss` | WebSocket echo | WebSocket echo (JSON fallback for non-upgrade) | Enhanced with fallback |
+| `GET /wss` | WebSocket echo | WebSocket echo at `GET /wss/http-test-services` (JSON fallback for non-upgrade) | Moved to a fixed path, enhanced with fallback |
 | `GET /sse` | SSE ping stream | SSE ping stream (3s interval, random float) | Same behavior |
 | `GET /env` | Environment variables as JSON | **Removed** | Security concern |
 | `GET /{version}/openapi.json` | N/A | **Added** — serves OpenAPI 3.0 spec | New |
@@ -54,8 +56,8 @@ The prefix `(/api/http-test-services/)` is configurable via the `API_PREFIX` env
 ## New Features
 
 - **OpenAPI spec endpoint** — `GET /{version}/openapi.json` serves a bundled OpenAPI 3.0 specification from `/docs/openapi.json`.
-- **WebSocket JSON fallback** — Non-upgrade requests to `/wss` return a JSON response instead of failing.
-- **Versioned routes** — All endpoints accept an optional `/v{version}/` segment in the path. This is to future proof if we implement versioned routes for any of the endpoints.
+- **WebSocket JSON fallback** — Non-upgrade requests to `/wss/http-test-services` return a JSON response instead of failing.
+- **Versioned routes** — All endpoints except the WebSocket one accept an optional `/v{version}/` segment in the path. This is to future proof if we implement versioned routes for any of the endpoints.
 - **Custom ordered JSON marshaling** — The `/request` endpoint returns JSON with deterministically ordered keys.
 
 ## Removed Features
@@ -77,14 +79,15 @@ The prefix `(/api/http-test-services/)` is configurable via the `API_PREFIX` env
 
 ## Deployment
 
-Both versions deploy via Clowder/ClowdApp on the same platform:
+The old service deployed via Clowder/ClowdApp. The new one deploys from a plain OpenShift template, `deployment/deploy.yaml`, referenced by app-interface:
 
 | Setting | Old | New |
 |---|---|---|
-| **HTTP port** | 9092 (via Clowder `webPort`) | 9092 (via Clowder `webPort`) |
+| **Manifest** | ClowdApp | `Deployment` + `Service` template |
+| **HTTP port** | 9092 (via Clowder `webPort`) | 9092 (`HTTP_PORT`, or Clowder `webPort` if `ACG_CONFIG` is set) |
 | **gRPC port** | 50051 | 50051 |
 | **Container base** | UBI9 | Hummingbird (`hi/core-runtime` FIPS) |
-| **Min replicas** | 2 | 2 |
+| **Replicas** | 2 | 2 (`REPLICAS`) |
 | **Health checks** | `GET /ping` | `GET /ping` (liveness + readiness) |
 | **Image registry** | quay.io/cloudservices | quay.io/hcc-accessmanagement-tenant |
 
@@ -110,7 +113,7 @@ Both versions deploy via Clowder/ClowdApp on the same platform:
 
 - `google.golang.org/grpc` — gRPC framework
 - `google.golang.org/protobuf` — Protocol Buffers
-- `nhooyr.io/websocket` — WebSocket support
+- `github.com/coder/websocket` — WebSocket support
 
 No external HTTP framework or Clowder client library is needed — the Go service reads Clowder's `ACG_CONFIG` JSON directly.
 
@@ -120,7 +123,7 @@ No external HTTP framework or Clowder client library is needed — the Go servic
 |---|---|---|
 | **Framework** | RSpec | Go `testing` + `httptest` |
 | **Server required** | Yes (Thin must boot) | No (uses `httptest.NewRecorder`) |
-| **Test count** | ~10 specs | 14 test functions |
+| **Test count** | ~10 specs | 18 test functions |
 | **Coverage** | Route responses, redirects | Routes, redirects, uploads, identity, sleep, status override, WebSocket fallback, versioned routes |
 
 ## Performance Benefits
