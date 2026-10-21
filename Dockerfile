@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/hi/go:1.26.5-fips-builder AS builder
+FROM registry.access.redhat.com/hi/go:1.26.10-fips-builder AS builder
 WORKDIR /app
 USER root
 COPY go.mod go.sum ./
